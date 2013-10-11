@@ -17,8 +17,7 @@ import sys
 
 MATLAB_FOLDER = '%s/matlab' % os.path.realpath(os.path.dirname(__file__))
 
-
-def _run_matlab_server(matlab_bin, matlab_port, matlab_log, matlab_id, matlab_startup_options):
+def _build_command(matlab_bin, matlab_port, matlab_log, matlab_id, matlab_startup_options):
     command = matlab_bin
     command += ' %s ' % matlab_startup_options
     command += ' -r "'
@@ -28,6 +27,10 @@ def _run_matlab_server(matlab_bin, matlab_port, matlab_log, matlab_id, matlab_st
 
     if matlab_log:
         command += ' -logfile ./pymatbridge/logs/matlablog_%s.txt > ./pymatbridge/logs/bashlog_%s.txt' % (matlab_id, matlab_id)
+
+    return command
+    
+def _run_matlab_server(command):
 
     os.system(command)
     return True
@@ -106,7 +109,7 @@ class Matlab(object):
     
         if startup_options:
             self.startup_options = startup_options
-        elif self.platform == 'Windows':
+        elif 'win' in self.platform :
             self.startup_options = ' -automation -noFigureWindows'
         else:
             self.startup_options = ' -nodesktop -nodisplay'
@@ -115,9 +118,15 @@ class Matlab(object):
         # Start the MATLAB server
         print "Starting MATLAB on http://%s:%s" % (self.host, str(self.port))
         print " visit http://%s:%s/exit.m to shut down same" % (self.host, str(self.port))
-        self.server_process = Process(target=_run_matlab_server, args=(self.matlab, self.port, self.log, self.id, self.startup_options))
-        self.server_process.daemon = True
-        self.server_process.start()
+        command = _build_command(self.matlab, self.port, self.log, self.id, self.startup_options)
+        if not 'win' in self.platform:
+            self.server_process = Process(target=_run_matlab_server, args=(command))
+            self.server_process.daemon = True
+            self.server_process.start()
+        else:
+            # print self.startup_options
+            os.system(command)
+
         while not self.is_connected():
             np.disp(".", linefeed=False)
             time.sleep(1)
