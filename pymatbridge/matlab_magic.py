@@ -95,7 +95,8 @@ class MatlabMagics(Magics):
                  maxtime=None,
                  matlab_converter=matlab_converter,
                  pyconverter=np.asarray,
-                 cache_display_data=False):
+                 cache_display_data=False,
+                 startup_options=None):
         """
         Parameters
         ----------
@@ -125,9 +126,11 @@ class MatlabMagics(Magics):
         """
         super(MatlabMagics, self).__init__(shell)
         self.cache_display_data = cache_display_data
-
+        if startup_options is None:
+            startup_options='-noFigureWindows -nodesktop -nosplash -nodisplay'
+        
         self.Matlab = pymat.Matlab(matlab, maxtime=maxtime,
-                                   startup_options='-noFigureWindows')
+                                   startup_options=startup_options)
         self.Matlab.start()
         self.pyconverter = pyconverter
         self.matlab_converter = matlab_converter        
